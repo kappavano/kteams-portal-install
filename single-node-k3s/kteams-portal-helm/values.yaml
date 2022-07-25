@@ -1,0 +1,3 @@
+baseDomain: demo2204.kteams.net
+databaseVolumeStorage: 5Gi
+kteamsReleaseTag: day20220612

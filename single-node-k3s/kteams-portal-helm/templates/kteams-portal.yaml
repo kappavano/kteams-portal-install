@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: portal-sa-fullaccess
+  namespace: {{ .Release.Name }}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-fullaccess-crb
+  namespace: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: portal-sa-fullaccess
+  namespace: {{ .Release.Name }}  
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kteams-portal-deployment
+  labels:
+    app: kteams-portal
+  namespace: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kteams-portal
+  template:
+    metadata:
+      labels:
+        app: kteams-portal
+      annotations:
+        kteams.com/kt-release: {{ .Values.kteamsReleaseTag }}   
+    spec:
+      containers:
+        - name: kteams-portal
+          image: "kteams/kteams-portal:{{ .Values.kteamsReleaseTag }}"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KTEAMS_PORTAL_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KTEAMS_RELEASE
+              value: "{{ .Values.kteamsReleaseTag }}" 
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kteams-database-admin-password
+                  key: postgresadmin_password.txt                 
+          # args: ["--unsafeMode", "true"]
+          args: ["--dbType=postgres", "--dbConnection", "dbname=postgres sslmode=disable host=kteams-database-service.kteams port=5432 user=postgres password=$(POSTGRES_PASSWORD) sslmode=disable", "--unsafeMode=true"]
+        - name: kubectl-apply-server 
+          image: "kteams/kubectl-apply-server-1-18:{{ .Values.kteamsReleaseTag }}"
+          ports:
+            - containerPort: 9091
+        - name: nbconvert-server 
+          image: kteams/nbconvert-server:latest
+          ports:
+            - containerPort: 9092
+      serviceAccountName: portal-sa-fullaccess
+      automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kteams-portal-service
+  namespace: {{ .Release.Name }}
+spec:
+  ports:
+  - name: web
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: kteams-portal
+  sessionAffinity: None
+  type: ClusterIP
+---
+

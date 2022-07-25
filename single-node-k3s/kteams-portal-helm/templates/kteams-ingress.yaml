@@ -1,0 +1,47 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroutetls
+  namespace: {{ .Release.Name }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`portal.{{- .Values.baseDomain -}}`)
+    # for letsencrypt to work, it must be enabled in traefik and a "*.<domain>" or fully-qualified A record must exist
+    kind: Rule
+    services:
+    - name: kteams-portal-service
+      namespace: {{ .Release.Name }}
+      port: 8080
+  tls:
+    certResolver: myresolver
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: httpsredirect
+  namespace: {{ .Release.Name }}
+spec:
+  redirectScheme:
+    scheme: https
+    port: "443"
+    permanent: true
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroutehttp
+  namespace: {{ .Release.Name }}
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`portal.{{- .Values.baseDomain -}}`)
+    kind: Rule
+    middlewares:
+      - name: httpsredirect
+    services:
+    - name: kteams-portal-service
+      namespace: {{ .Release.Name }}
+      port: 8080

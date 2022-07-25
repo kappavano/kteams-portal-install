@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kteams-database
+  labels:
+    app: kteams-database
+  namespace: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kteams-database
+  template:
+    metadata:
+      labels:
+        app: kteams-database
+    spec:
+      containers:
+      - name: kteams-database
+        image: postgres:14
+        imagePullPolicy: "IfNotPresent"
+        ports:
+          - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kteams-database-admin-password
+              key: postgresadmin_password.txt
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgredb
+      volumes:
+      - name: postgredb
+        persistentVolumeClaim:
+          claimName: kteams-database-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kteams-database-pvc
+  namespace: {{ .Release.Name }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{- .Values.databaseVolumeStorage -}}
+  #storageClassName: non-default-storage-class
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kteams-database-admin-password
+  namespace: {{ .Release.Name }}
+type: Opaque
+data:
+  # password is 'defaultpassword5647382910', BASE64 encoded 
+  "postgresadmin_password.txt": ZGVmYXVsdHBhc3N3b3JkNTY0NzM4MjkxMA==
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kteams-database-service
+  namespace: {{ .Release.Name }}
+spec:
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: kteams-database
+  sessionAffinity: None
+  type: ClusterIP
+
