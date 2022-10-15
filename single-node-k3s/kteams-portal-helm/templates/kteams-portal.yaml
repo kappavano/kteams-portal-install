@@ -50,13 +50,15 @@ spec:
                   fieldPath: metadata.namespace
             - name: KTEAMS_RELEASE
               value: "{{ .Values.kteamsReleaseTag }}" 
+            - name: POSTGRES_USER
+              value: postgres
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: kteams-database-admin-password
                   key: postgresadmin_password.txt                 
           # args: ["--unsafeMode", "true"]
-          args: ["--dbType=postgres", "--dbConnection", "dbname=postgres sslmode=disable host=kteams-database-service.kteams port=5432 user=postgres password=$(POSTGRES_PASSWORD) sslmode=disable", "--unsafeMode=true"]
+          args: ["--dbType=postgres", "--dbConnection", "dbname=postgres sslmode=disable host=kteams-database-service.kteams port=5432 user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) sslmode=disable", "--unsafeMode=true"]
         - name: kubectl-apply-server 
           image: "kteams/kubectl-apply-server-1-18:{{ .Values.kteamsReleaseTag }}"
           ports:
