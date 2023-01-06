@@ -2,7 +2,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroutetls
-  namespace: {{ .Release.Name }}
 spec:
   entryPoints:
     - websecure
@@ -12,7 +11,7 @@ spec:
     kind: Rule
     services:
     - name: kteams-portal-service
-      namespace: {{ .Release.Name }}
+      namespace: {{ .Release.Namespace }}
       port: 8080
   tls:
     certResolver: myresolver
@@ -21,7 +20,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: httpsredirect
-  namespace: {{ .Release.Name }}
 spec:
   redirectScheme:
     scheme: https
@@ -32,7 +30,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroutehttp
-  namespace: {{ .Release.Name }}
 spec:
   entryPoints:
     - web
@@ -43,5 +40,5 @@ spec:
       - name: httpsredirect
     services:
     - name: kteams-portal-service
-      namespace: {{ .Release.Name }}
+      namespace: {{ .Release.Namespace }}
       port: 8080

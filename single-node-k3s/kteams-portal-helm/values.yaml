@@ -1,3 +1,4 @@
 baseDomain: demo2204.kteams.net
-databaseVolumeStorage: 5Gi
-kteamsReleaseTag: day20220612
+databaseVolumeStorage: 5G
+kteamsReleaseTag: day20230101
+createClusterRoleBinding: false

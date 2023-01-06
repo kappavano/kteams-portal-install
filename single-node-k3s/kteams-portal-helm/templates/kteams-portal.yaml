@@ -2,14 +2,15 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: portal-sa-fullaccess
-  namespace: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 automountServiceAccountToken: false
 ---
+{{- if .Values.createClusterRoleBinding -}}  
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: cluster-fullaccess-crb
-  namespace: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -17,7 +18,8 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: portal-sa-fullaccess
-  namespace: {{ .Release.Name }}  
+  namespace: {{ .Release.Namespace }}  
+{{- end }}  
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,7 +27,7 @@ metadata:
   name: kteams-portal-deployment
   labels:
     app: kteams-portal
-  namespace: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -58,7 +60,7 @@ spec:
                   name: kteams-database-admin-password
                   key: postgresadmin_password.txt                 
           # args: ["--unsafeMode", "true"]
-          args: ["--dbType=postgres", "--dbConnection", "dbname=postgres sslmode=disable host=kteams-database-service.kteams port=5432 user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) sslmode=disable", "--unsafeMode=true"]
+          args: ["--dbType=postgres", "--dbConnection", "dbname=postgres sslmode=disable host=kteams-database-service.{{- .Release.Namespace }} port=5432 user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) sslmode=disable", "--unsafeMode=true"]
         - name: kubectl-apply-server 
           image: "kteams/kubectl-apply-server-1-18:{{ .Values.kteamsReleaseTag }}"
           ports:
@@ -74,7 +76,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kteams-portal-service
-  namespace: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
   - name: web
