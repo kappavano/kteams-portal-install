@@ -1,8 +1,0 @@
-additionalArguments:
-  - "--certificatesresolvers.myresolver.acme.email=letsencrypt@brainlounge.de"
-  - "--certificatesresolvers.myresolver.acme.storage=/data/acme-traefik2.json"
-  - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-  - "--entrypoints.websecure.http.tls=true" # test
-#  - "--accesslog"
-  - "--log.level=INFO"
-
