@@ -1,0 +1,2 @@
+helm package kteams-portal-helm-chart
+mv kteams-portal-helm-*.tgz kteams-portal-helm-release/
